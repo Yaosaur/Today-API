@@ -10,6 +10,7 @@ const secret = process.env.SECRET;
 
 const mongoose = require('mongoose');
 const User = require('./models/user');
+const Project = require('./models/project');
 
 mongoose.connect(process.env.MONGO_URI);
 mongoose.connection.once('open', () => {
@@ -22,14 +23,6 @@ require('./middleware/passport');
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-
-app.get(
-  '/protected',
-  passport.authenticate('jwt', { session: false }),
-  (req, res) => {
-    res.json({ message: 'You made it!' });
-  }
-);
 
 app.post('/register', (req, res) => {
   const { password } = req.body;
@@ -61,6 +54,19 @@ app.post('/login', (req, res) => {
     }
   });
 });
+
+app.post(
+  '/project',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    Project.create(
+      { ...req.body, creator: req.user.id },
+      (err, createdProject) => {
+        res.json(createdProject);
+      }
+    );
+  }
+);
 
 app.listen(port, () => {
   console.log('I am listening on port', port);
