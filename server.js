@@ -3,6 +3,7 @@ const app = express();
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const passport = require('passport');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 const secret = process.env.SECRET;
@@ -15,13 +16,20 @@ mongoose.connection.once('open', () => {
   console.log('connected to mongo');
 });
 
+app.use(passport.initialize());
+require('./middleware/passport');
+
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-app.get('/protected', (req, res) => {
-  res.send('This should be protected!');
-});
+app.get(
+  '/protected',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    res.json({ message: 'You made it!' });
+  }
+);
 
 app.post('/register', (req, res) => {
   const { password } = req.body;
@@ -32,7 +40,7 @@ app.post('/register', (req, res) => {
     const token = jwt.sign({ id, email, firstName, lastName }, secret, {
       expiresIn: '8h',
     });
-    res.json({ id, firstName, lastName, token });
+    res.json({ id, firstName, lastName, email, token: 'Bearer ' + token });
   });
 });
 
@@ -48,7 +56,7 @@ app.post('/login', (req, res) => {
         const token = jwt.sign({ id, email, firstName, lastName }, secret, {
           expiresIn: '8h',
         });
-        res.json({ id, email, firstName, lastName, token });
+        res.json({ id, firstName, lastName, email, token: 'Bearer ' + token });
       }
     }
   });
