@@ -10,6 +10,7 @@ const secret = process.env.SECRET;
 
 const mongoose = require('mongoose');
 const User = require('./models/user');
+const Project = require('./models/project');
 
 mongoose.connect(process.env.MONGO_URI);
 mongoose.connection.once('open', () => {
@@ -22,14 +23,6 @@ require('./middleware/passport');
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-
-app.get(
-  '/protected',
-  passport.authenticate('jwt', { session: false }),
-  (req, res) => {
-    res.json({ message: 'You made it!' });
-  }
-);
 
 app.post('/register', (req, res) => {
   const { password } = req.body;
@@ -61,6 +54,85 @@ app.post('/login', (req, res) => {
     }
   });
 });
+
+app.get(
+  '/projects',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    Project.find(
+      { $or: [{ creator: req.user.id }, { members: req.user.id }] },
+      (err, foundProjects) => {
+        res.json(foundProjects);
+      }
+    );
+  }
+);
+
+app.get(
+  '/projects/:id',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    Project.findById(req.params.id, (err, foundProject) => {
+      foundProject
+        .populate('members', '-_id firstName lastName email')
+        .then(data => {
+          res.json(data);
+        });
+    });
+  }
+);
+
+app.post(
+  '/projects',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const arrayOfEmails = req.body.members.map(member => member.email);
+    const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
+    Project.create(
+      { ...req.body, members: membersId, creator: req.user.id },
+      (err, createdProject) => {
+        res.json(createdProject);
+      }
+    );
+  }
+);
+
+app.put(
+  '/projects/:id',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const arrayOfEmails = req.body.members.map(member => member.email);
+    const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
+    Project.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, members: membersId },
+      { new: true },
+      (err, editedProject) => {
+        res.json({ ...editedProject, members: req.body.members });
+      }
+    );
+  }
+);
+
+app.delete(
+  '/projects/:id',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    Project.findByIdAndRemove(req.params.id, (err, removedProject) => {
+      res.json(removedProject);
+    });
+  }
+);
+
+app.get(
+  '/users',
+  passport.authenticate('jwt', { session: false }),
+  (req, res) => {
+    User.find({}, '-_id -password -projects', (err, foundUsers) => {
+      res.json(foundUsers);
+    });
+  }
+);
 
 app.listen(port, () => {
   console.log('I am listening on port', port);
