@@ -58,10 +58,13 @@ app.post('/login', (req, res) => {
 app.get(
   '/projects',
   passport.authenticate('jwt', { session: false }),
-  (req, res) => {
-    Project.find({ creator: req.user.id }, (err, foundProjects) => {
-      res.json(foundProjects);
-    });
+  async (req, res) => {
+    Project.find(
+      { $or: [{ creator: req.user.id }, { members: req.user.id }] },
+      (err, foundProjects) => {
+        res.json(foundProjects);
+      }
+    );
   }
 );
 
