@@ -59,12 +59,9 @@ app.get(
   '/projects',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    Project.find(
-      { $or: [{ creator: req.user.id }, { members: req.user.id }] },
-      (err, foundProjects) => {
-        res.json(foundProjects);
-      }
-    );
+    Project.find({ $or: [{ creator: req.user.id }, { members: req.user.id }] })
+      .populate('members', '-_id firstName lastName email')
+      .then(data => res.json(data));
   }
 );
 
@@ -108,7 +105,11 @@ app.put(
       { ...req.body, members: membersId },
       { new: true },
       (err, editedProject) => {
-        res.json({ ...editedProject, members: req.body.members });
+        editedProject
+          .populate('members', '-_id firstName lastName email')
+          .then(data => {
+            res.json(data);
+          });
       }
     );
   }
