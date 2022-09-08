@@ -11,6 +11,7 @@ const secret = process.env.SECRET;
 const mongoose = require('mongoose');
 const User = require('./models/user');
 const Project = require('./models/project');
+const Task = require('./models/task');
 
 mongoose.connect(process.env.MONGO_URI);
 mongoose.connection.once('open', () => {
@@ -59,9 +60,18 @@ app.get(
   '/projects',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    Project.find({ $or: [{ creator: req.user.id }, { members: req.user.id }] })
-      .populate('members', '-_id firstName lastName email')
-      .then(data => res.json(data));
+    const foundProjects = await Project.find({
+      $or: [{ creator: req.user.id }, { members: req.user.id }],
+    })
+      .populate('creator members', '-_id firstName lastName email')
+      .populate({
+        path: 'tasks',
+        populate: [
+          { path: 'issuer', select: '-_id firstName lastName email' },
+          { path: 'assignedTo', select: '-_id firstName lastName email' },
+        ],
+      });
+    res.json(foundProjects);
   }
 );
 
@@ -69,13 +79,16 @@ app.get(
   '/projects/:id',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    Project.findById(req.params.id, (err, foundProject) => {
-      foundProject
-        .populate('members', '-_id firstName lastName email')
-        .then(data => {
-          res.json(data);
-        });
-    });
+    const foundProjects = await Project.findById(req.params.id)
+      .populate('creator members', '-_id firstName lastName email')
+      .populate({
+        path: 'tasks',
+        populate: [
+          { path: 'issuer', select: '-_id firstName lastName email' },
+          { path: 'assignedTo', select: '-_id firstName lastName email' },
+        ],
+      });
+    res.json(foundProjects);
   }
 );
 
@@ -100,18 +113,20 @@ app.put(
   async (req, res) => {
     const arrayOfEmails = req.body.members.map(member => member.email);
     const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
-    Project.findByIdAndUpdate(
+    const editedProject = await Project.findByIdAndUpdate(
       req.params.id,
       { ...req.body, members: membersId },
-      { new: true },
-      (err, editedProject) => {
-        editedProject
-          .populate('members', '-_id firstName lastName email')
-          .then(data => {
-            res.json(data);
-          });
-      }
-    );
+      { new: true }
+    )
+      .populate('creator members', '-_id firstName lastName email')
+      .populate({
+        path: 'tasks',
+        populate: [
+          { path: 'issuer', select: '-_id firstName lastName email' },
+          { path: 'assignedTo', select: '-_id firstName lastName email' },
+        ],
+      });
+    res.json(editedProject);
   }
 );
 
@@ -132,6 +147,36 @@ app.get(
     User.find({}, '-_id -password -projects', (err, foundUsers) => {
       res.json(foundUsers);
     });
+  }
+);
+
+app.post(
+  '/projects/:id/task',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const arrayOfEmails = req.body.assignedTo.map(member => member.email);
+    const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
+    const newTask = await Task.create({
+      ...req.body,
+      dateCreated: new Date(),
+      issuer: req.user.id,
+      assignedTo: membersId,
+      status: 'In Progress',
+    });
+    const updatedProject = await Project.findByIdAndUpdate(
+      req.params.id,
+      { $push: { tasks: newTask._id } },
+      { new: true }
+    )
+      .populate('creator members', '-_id firstName lastName email')
+      .populate({
+        path: 'tasks',
+        populate: [
+          { path: 'issuer', select: '-_id firstName lastName email' },
+          { path: 'assignedTo', select: '-_id firstName lastName email' },
+        ],
+      });
+    res.json(updatedProject);
   }
 );
 
