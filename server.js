@@ -10,8 +10,6 @@ const secret = process.env.SECRET;
 
 const mongoose = require('mongoose');
 const User = require('./models/user');
-const Project = require('./models/project');
-const Task = require('./models/task');
 
 mongoose.connect(process.env.MONGO_URI);
 mongoose.connection.once('open', () => {
@@ -24,6 +22,11 @@ require('./middleware/passport');
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+
+const usersController = require('./controllers/users.js');
+const projectsController = require('./controllers/projects.js');
+app.use('/users', usersController);
+app.use('/projects', projectsController);
 
 app.post('/register', (req, res) => {
   const { password } = req.body;
@@ -55,130 +58,6 @@ app.post('/login', (req, res) => {
     }
   });
 });
-
-app.get(
-  '/projects',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    const foundProjects = await Project.find({
-      $or: [{ creator: req.user.id }, { members: req.user.id }],
-    })
-      .populate('creator members', '-_id firstName lastName email')
-      .populate({
-        path: 'tasks',
-        populate: [
-          { path: 'issuer', select: '-_id firstName lastName email' },
-          { path: 'assignedTo', select: '-_id firstName lastName email' },
-        ],
-      });
-    res.json(foundProjects);
-  }
-);
-
-app.get(
-  '/projects/:id',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    const foundProjects = await Project.findById(req.params.id)
-      .populate('creator members', '-_id firstName lastName email')
-      .populate({
-        path: 'tasks',
-        populate: [
-          { path: 'issuer', select: '-_id firstName lastName email' },
-          { path: 'assignedTo', select: '-_id firstName lastName email' },
-        ],
-      });
-    res.json(foundProjects);
-  }
-);
-
-app.post(
-  '/projects',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    const arrayOfEmails = req.body.members.map(member => member.email);
-    const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
-    Project.create(
-      { ...req.body, members: membersId, creator: req.user.id },
-      (err, createdProject) => {
-        res.json(createdProject);
-      }
-    );
-  }
-);
-
-app.put(
-  '/projects/:id',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    const arrayOfEmails = req.body.members.map(member => member.email);
-    const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
-    const editedProject = await Project.findByIdAndUpdate(
-      req.params.id,
-      { ...req.body, members: membersId },
-      { new: true }
-    )
-      .populate('creator members', '-_id firstName lastName email')
-      .populate({
-        path: 'tasks',
-        populate: [
-          { path: 'issuer', select: '-_id firstName lastName email' },
-          { path: 'assignedTo', select: '-_id firstName lastName email' },
-        ],
-      });
-    res.json(editedProject);
-  }
-);
-
-app.delete(
-  '/projects/:id',
-  passport.authenticate('jwt', { session: false }),
-  (req, res) => {
-    Project.findByIdAndRemove(req.params.id, (err, removedProject) => {
-      res.json(removedProject);
-    });
-  }
-);
-
-app.get(
-  '/users',
-  passport.authenticate('jwt', { session: false }),
-  (req, res) => {
-    User.find({}, '-_id -password -projects', (err, foundUsers) => {
-      res.json(foundUsers);
-    });
-  }
-);
-
-app.post(
-  '/projects/:id/task',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    const arrayOfEmails = req.body.assignedTo.map(member => member.email);
-    const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
-    const newTask = await Task.create({
-      ...req.body,
-      dateCreated: new Date(),
-      issuer: req.user.id,
-      assignedTo: membersId,
-      status: 'In Progress',
-    });
-    const updatedProject = await Project.findByIdAndUpdate(
-      req.params.id,
-      { $push: { tasks: newTask._id } },
-      { new: true }
-    )
-      .populate('creator members', '-_id firstName lastName email')
-      .populate({
-        path: 'tasks',
-        populate: [
-          { path: 'issuer', select: '-_id firstName lastName email' },
-          { path: 'assignedTo', select: '-_id firstName lastName email' },
-        ],
-      });
-    res.json(updatedProject);
-  }
-);
 
 app.listen(port, () => {
   console.log('I am listening on port', port);
