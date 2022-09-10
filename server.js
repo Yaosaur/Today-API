@@ -25,7 +25,9 @@ app.use(express.json());
 
 const usersController = require('./controllers/users.js');
 const projectsController = require('./controllers/projects.js');
+const tasksController = require('./controllers/tasks.js');
 app.use('/users', usersController);
+app.use('/projects/:projectId/tasks', tasksController);
 app.use('/projects', projectsController);
 
 app.post('/register', (req, res) => {
