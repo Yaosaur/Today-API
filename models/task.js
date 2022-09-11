@@ -9,7 +9,7 @@ const taskSchema = new mongoose.Schema({
   assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   priority: { type: String, enum: ['Low', 'Medium', 'High'] },
   status: { type: String, enum: ['In Progress', 'Completed'] },
-  type: { type: String, enum: ['New Feature', 'Bug Fix'] },
+  type: { type: String, enum: ['New Feature', 'Issue'] },
 });
 
 const Task = mongoose.model('Task', taskSchema);

@@ -19,7 +19,7 @@ router.get(
 );
 
 router.post(
-  '/',
+  '/:projectId',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const arrayOfEmails = req.body.assignedTo.map(member => member.email);
@@ -69,7 +69,7 @@ router.put(
 );
 
 router.delete(
-  '/:taskId',
+  '/:projectId/:taskId',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const { projectId, taskId } = req.params;
