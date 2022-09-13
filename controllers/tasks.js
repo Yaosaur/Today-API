@@ -7,6 +7,19 @@ const Project = require('../models/project');
 const Task = require('../models/task');
 
 router.get(
+  '/',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const foundTasks = await Task.find({
+      $or: [{ issuer: req.user.id }, { assignedTo: req.user.id }],
+    })
+      .populate('project', 'title')
+      .populate('issuer assignedTo', '-_id firstName lastName email');
+    res.json(foundTasks);
+  }
+);
+
+router.get(
   '/:taskId',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
@@ -26,10 +39,11 @@ router.post(
     const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
     const newTask = await Task.create({
       ...req.body,
+      project: req.params.projectId,
       dateCreated: new Date(),
       issuer: req.user.id,
       assignedTo: membersId,
-      status: 'In Progress',
+      status: 'New',
     });
     const updatedProject = await Project.findByIdAndUpdate(
       req.params.projectId,
