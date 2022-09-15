@@ -23,10 +23,12 @@ router.get(
   '/:taskId',
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
-    const foundTask = await Task.findById(req.params.taskId).populate(
-      'issuer assignedTo',
-      '-_id firstName lastName email'
-    );
+    const foundTask = await Task.findById(req.params.taskId)
+      .populate('issuer assignedTo', '-_id firstName lastName email')
+      .populate({
+        path: 'comments',
+        populate: [{ path: 'poster', select: '-_id firstName lastName email' }],
+      });
     res.json(foundTask);
   }
 );

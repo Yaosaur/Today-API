@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Comment = require('./comment');
 
 const taskSchema = new mongoose.Schema({
   project: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
@@ -11,6 +12,17 @@ const taskSchema = new mongoose.Schema({
   priority: { type: String, enum: ['Low', 'Medium', 'High'] },
   status: { type: String, enum: ['New', 'In Progress', 'Completed'] },
   type: { type: String, enum: ['New Feature', 'Issue'] },
+  comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
+});
+
+taskSchema.post('findOneAndRemove', async function (task) {
+  if (task) {
+    await Comment.deleteMany({
+      _id: {
+        $in: task.comments,
+      },
+    });
+  }
 });
 
 const Task = mongoose.model('Task', taskSchema);

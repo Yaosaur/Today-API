@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Task = require('./task');
+const Comment = require('./comment');
 
 const projectSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -11,6 +12,16 @@ const projectSchema = new mongoose.Schema({
 
 projectSchema.post('findOneAndRemove', async function (project) {
   if (project) {
+    const relatedTasks = await Task.find({
+      _id: {
+        $in: project.tasks,
+      },
+    });
+    await Comment.deleteMany({
+      _id: {
+        $in: relatedTasks.map(task => task.comments).flat(),
+      },
+    });
     await Task.deleteMany({
       _id: {
         $in: project.tasks,
