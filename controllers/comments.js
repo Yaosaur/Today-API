@@ -30,4 +30,34 @@ router.post(
   }
 );
 
+router.put(
+  '/:taskId/:commentId',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const { taskId, commentId } = req.params;
+    await Comment.findByIdAndUpdate(commentId, req.body);
+    const task = await Task.findById(taskId).populate({
+      path: 'comments',
+      populate: [{ path: 'poster', select: '-_id firstName lastName email' }],
+    });
+    res.json(task);
+  }
+);
+
+router.delete(
+  '/:taskId/:commentId',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const { taskId, commentId } = req.params;
+    await Comment.findByIdAndRemove(commentId);
+    const updatedTask = await Task.findByIdAndUpdate(taskId, {
+      $pull: { comments: commentId },
+    }).populate({
+      path: 'comments',
+      populate: [{ path: 'poster', select: '-_id firstName lastName email' }],
+    });
+    res.json(updatedTask);
+  }
+);
+
 module.exports = router;
