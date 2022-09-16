@@ -14,7 +14,7 @@ router.get(
       $or: [{ issuer: req.user.id }, { assignedTo: req.user.id }],
     })
       .populate('project', 'title')
-      .populate('issuer assignedTo', '-_id firstName lastName email');
+      .populate('issuer assignedTo', '-_id firstName lastName email image');
     res.json(foundTasks);
   }
 );
@@ -24,10 +24,12 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
     const foundTask = await Task.findById(req.params.taskId)
-      .populate('issuer assignedTo', '-_id firstName lastName email')
+      .populate('issuer assignedTo', '-_id firstName lastName email image')
       .populate({
         path: 'comments',
-        populate: [{ path: 'poster', select: '-_id firstName lastName email' }],
+        populate: [
+          { path: 'poster', select: '-_id firstName lastName email image' },
+        ],
       });
     res.json(foundTask);
   }
@@ -54,12 +56,12 @@ router.post(
       },
       { new: true }
     )
-      .populate('creator members', '-_id firstName lastName email')
+      .populate('creator members', '-_id firstName lastName email image')
       .populate({
         path: 'tasks',
         populate: [
-          { path: 'issuer', select: '-_id firstName lastName email' },
-          { path: 'assignedTo', select: '-_id firstName lastName email' },
+          { path: 'issuer', select: '-_id firstName lastName email image' },
+          { path: 'assignedTo', select: '-_id firstName lastName email image' },
         ],
       });
     res.json(updatedProject);
@@ -79,7 +81,7 @@ router.put(
         assignedTo: membersId,
       },
       { new: true }
-    ).populate('issuer assignedTo', '-_id firstName lastName email');
+    ).populate('issuer assignedTo', '-_id firstName lastName email image');
     res.json(updatedTask);
   }
 );
@@ -93,12 +95,12 @@ router.delete(
     const updatedProject = await Project.findByIdAndUpdate(projectId, {
       $pull: { tasks: taskId },
     })
-      .populate('creator members', '-_id firstName lastName email')
+      .populate('creator members', '-_id firstName lastName email image')
       .populate({
         path: 'tasks',
         populate: [
-          { path: 'issuer', select: '-_id firstName lastName email' },
-          { path: 'assignedTo', select: '-_id firstName lastName email' },
+          { path: 'issuer', select: '-_id firstName lastName email image' },
+          { path: 'assignedTo', select: '-_id firstName lastName email image' },
         ],
       });
     res.json(updatedProject);
