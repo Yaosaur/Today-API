@@ -28,8 +28,8 @@ const projectsController = require('./controllers/projects.js');
 const tasksController = require('./controllers/tasks.js');
 const commentsController = require('./controllers/comments.js');
 app.use('/users', usersController);
-app.use('/tasks/', tasksController);
-app.use('/comments/', commentsController);
+app.use('/tasks', tasksController);
+app.use('/comments', commentsController);
 app.use('/projects', projectsController);
 
 app.post('/register', (req, res) => {
@@ -41,7 +41,14 @@ app.post('/register', (req, res) => {
     const token = jwt.sign({ id, email, firstName, lastName }, secret, {
       expiresIn: '8h',
     });
-    res.json({ id, firstName, lastName, email, token: 'Bearer ' + token });
+    res.json({
+      id,
+      firstName,
+      lastName,
+      email,
+      image,
+      token: 'Bearer ' + token,
+    });
   });
 });
 
@@ -53,11 +60,18 @@ app.post('/login', (req, res) => {
       if (!bcrypt.compareSync(req.body.password, user.password)) {
         res.json({ error: 'Invalid Credentials' });
       } else {
-        const { id, email, firstName, lastName } = user;
+        const { id, email, firstName, lastName, image } = user;
         const token = jwt.sign({ id, email, firstName, lastName }, secret, {
           expiresIn: '8h',
         });
-        res.json({ id, firstName, lastName, email, token: 'Bearer ' + token });
+        res.json({
+          id,
+          firstName,
+          lastName,
+          email,
+          image,
+          token: 'Bearer ' + token,
+        });
       }
     }
   });
