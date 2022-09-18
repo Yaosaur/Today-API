@@ -4,6 +4,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+const socket = require('socket.io');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 const secret = process.env.SECRET;
@@ -81,4 +82,22 @@ app.post('/login', (req, res) => {
 
 app.listen(port, () => {
   console.log('I am listening on port', port);
+});
+
+const server = require('http').createServer(app);
+
+const io = socket(server, {
+  cors: {
+    origin: process.env.CLIENT_ORIGIN,
+    credentials: true,
+  },
+});
+
+global.onlineUsers = new Map();
+
+io.on('connection', socket => {
+  global.chatSocket = socket;
+  socket.on('addUser', userId => {
+    onlineUsers.set(userId, socket.id);
+  });
 });
