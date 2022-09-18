@@ -4,6 +4,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+const socket = require('socket.io');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 const secret = process.env.SECRET;
@@ -27,10 +28,12 @@ const usersController = require('./controllers/users.js');
 const projectsController = require('./controllers/projects.js');
 const tasksController = require('./controllers/tasks.js');
 const commentsController = require('./controllers/comments.js');
+const messagesController = require('./controllers/messages.js');
 app.use('/users', usersController);
 app.use('/tasks', tasksController);
 app.use('/comments', commentsController);
 app.use('/projects', projectsController);
+app.use('/messages', messagesController);
 
 app.post('/register', (req, res) => {
   const { password } = req.body;
@@ -79,4 +82,22 @@ app.post('/login', (req, res) => {
 
 app.listen(port, () => {
   console.log('I am listening on port', port);
+});
+
+const server = require('http').createServer(app);
+
+const io = socket(server, {
+  cors: {
+    origin: process.env.CLIENT_ORIGIN,
+    credentials: true,
+  },
+});
+
+global.onlineUsers = new Map();
+
+io.on('connection', socket => {
+  global.chatSocket = socket;
+  socket.on('addUser', userId => {
+    onlineUsers.set(userId, socket.id);
+  });
 });
