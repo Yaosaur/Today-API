@@ -1,6 +1,6 @@
 # Today API
 
-Today API is the backend portion meant to be used with [Today, the Project Management App](https://github.com/Yaosaur/Today). In conjunction with the database it is able to take incoming requests from the Today App and register users, log them in, and allow them to create and manage projects and associated tasks with other users.
+Today API is the backend portion meant to be used with [Today, the Project Management App](https://github.com/Yaosaur/Today). Please check out that github repository for the live site. In conjunction with the database it is able to take incoming requests from the Today App and register users, log them in, and allow them to create and manage projects and associated tasks with other users. Within the tasks, users are able to post, edit, and delete their own comments and view all comments from other users. Users also have the option to upload a profile picture of themselves.
 
 ## RESTFUL Routes
 
@@ -8,28 +8,53 @@ Please note all routes below require the user to be authenticated and if a route
 
 ### Authentication/User
 
-| VERB | PATH      | DESCRIPTION                                                        |
-| ---- | --------- | ------------------------------------------------------------------ |
-| POST | /register | Registers a user and assigns them a token which expires in 8 hours |
-| POST | /login    | Logs a user in and assigns them a token which expires in 8 hours   |
-| GET  | /users    | Returns a list of all users available in the database              |
+| VERB | PATH            | DESCRIPTION                                                        |
+| ---- | --------------- | ------------------------------------------------------------------ |
+| POST | /register/      | Registers a user and assigns them a token which expires in 8 hours |
+| POST | /login          | Logs a user in and assigns them a token which expires in 8 hours   |
+| GET  | /users          | Returns a list of all users available in the database              |
+| GET  | /users/user     | Returns current user's information                                 |
+| PUT  | /users/setPhoto | Will replace the image set as user's profile picture               |
 
-### Project/Tasks
+### Projects
 
-| VERB   | PATH               | DESCRIPTION                                                                      |
-| ------ | ------------------ | -------------------------------------------------------------------------------- |
-| GET    | /projects          | Returns a list of all projects available in the database                         |
-| GET    | /projects/:id      | Returns a single project based on it's id                                        |
-| POST   | /projects          | Creates a new project and return's it's information                              |
-| PUT    | /projects/:id      | Edits an existing project and returns the edited project                         |
-| DELETE | /projects/:id      | Deletes a project (currently does not delete associated tasks)                   |
-| POST   | /projects/:id/task | Creates a new task associated with a single project and returns it's information |
+| VERB   | PATH          | DESCRIPTION                                                    |
+| ------ | ------------- | -------------------------------------------------------------- |
+| GET    | /projects/    | Returns a list of all projects available in the database       |
+| GET    | /projects/:id | Returns a single project based on it's id                      |
+| POST   | /projects     | Creates a new project and return's it's information            |
+| PUT    | /projects/:id | Edits an existing project and returns the edited project       |
+| DELETE | /projects/:id | Deletes a project (currently does not delete associated tasks) |
+
+### Tasks
+
+| VERB   | PATH                      | DESCRIPTION                                                                     |
+| ------ | ------------------------- | ------------------------------------------------------------------------------- |
+| GET    | /tasks/                   | Returns all tasks the current user is involved in either as issuer or assignee  |
+| GET    | /tasks/:taskId            | Returns a single task based on it's id                                          |
+| POST   | /tasks/:projectId         | Creates a new task, updates the associated project, and returns updated project |
+| PUT    | /tasks/:taskId            | Edits and returns a single task                                                 |
+| DELETE | /tasks/:projectId/:taskId | Removes a task and removes it from the associated project                       |
+
+### Comments
+
+| VERB   | PATH                         | DESCRIPTION                                                               |
+| ------ | ---------------------------- | ------------------------------------------------------------------------- |
+| POST   | /comments/:taskId            | Creates a comment and attaches it to a task, and returns the updated task |
+| PUT    | /comments/:taskId/:commentId | Updates a comment and returns the updated associated task                 |
+| DELETE | /comments/:taskId/:commentId | Removes a comment and its location in its associated task                 |
 
 ## Built With
 
-- Mongoose
+- MongoDB/Mongoose
 - Express
 - Node
+- AWS S3
+
+The following NPM packages:
+
+- Bcrypt, jsonwebtoken, Passport, PassportJWT
+- Multer/Multer-S3
 
 ## Deployment
 
@@ -51,7 +76,7 @@ After cloning, install the required NPM packages using
 npm install
 ```
 
-Finally, create a .env file with the following environmental variables: `PORT`, `MONGO_URI`, and `SECRET`.
+Finally, create a .env file with the following environmental variables: `PORT`, `MONGO_URI`, `SECRET`, `S3_ACCESS_KEY`, and `S3_ACCESS_SECRET`
 
 ### Postman
 
@@ -66,11 +91,10 @@ The request should return a token that you can use and reuse by entering it (the
 
 ## Contributing
 
-Currently not accepting any contributors for this project as the backend is still not fully complete.
+Currently not accepting any contributors for this project as the it is still a work in progress, but if you find any bugs you can report it [here](https://github.com/Yaosaur/Today-API/issues)
 
 ## Future Plans
 
-- Complete CRUD functionalities for task model
-- Add comments model on each task
-- Allow image uploading for user avatars and comments
-- Add in app messaging between users
+- Complete server side implementation of in-app messaging
+- Allow users to attach images to a comment
+- Implement history and changes to a task
