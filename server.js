@@ -27,10 +27,12 @@ const usersController = require('./controllers/users.js');
 const projectsController = require('./controllers/projects.js');
 const tasksController = require('./controllers/tasks.js');
 const commentsController = require('./controllers/comments.js');
+const messagesController = require('./controllers/messages.js');
 app.use('/users', usersController);
 app.use('/tasks', tasksController);
 app.use('/comments', commentsController);
 app.use('/projects', projectsController);
+app.use('/messages', messagesController);
 
 app.post('/register', (req, res) => {
   const { password } = req.body;
