@@ -11,6 +11,7 @@ const secret = process.env.SECRET;
 
 const mongoose = require('mongoose');
 const User = require('./models/user');
+const Message = require('./models/message');
 
 mongoose.connect(process.env.MONGO_URI);
 mongoose.connection.once('open', () => {
@@ -80,11 +81,9 @@ app.post('/login', (req, res) => {
   });
 });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log('I am listening on port', port);
 });
-
-const server = require('http').createServer(app);
 
 const io = socket(server, {
   cors: {
@@ -93,11 +92,34 @@ const io = socket(server, {
   },
 });
 
-global.onlineUsers = new Map();
+const onlineUsers = new Map();
 
 io.on('connection', socket => {
   global.chatSocket = socket;
+
   socket.on('addUser', userId => {
     onlineUsers.set(userId, socket.id);
+  });
+
+  socket.on('sendMsg', async data => {
+    const { receiverEmail, sender, content } = data;
+    const receivingUserId = await User.findOne(
+      {
+        email: receiverEmail,
+      },
+      'id'
+    );
+    const newMessage = await Message.create({
+      sender,
+      users: [sender, receivingUserId],
+      content,
+    });
+    await newMessage.populate(
+      'sender users',
+      '-_id firstName lastName email image'
+    );
+    const senderSocket = onlineUsers.get(sender);
+    const receivingUserSocket = onlineUsers.get(receivingUserId._id.toString());
+    io.to(senderSocket).to(receivingUserSocket).emit('receiveMsg', newMessage);
   });
 });

@@ -19,25 +19,12 @@ router.get(
   }
 );
 
-router.post(
-  '/',
-  passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
-    const { receiverEmail, content } = req.body;
-    const receiver = await User.findOne({ email: receiverEmail }, 'id');
-    Message.create(
-      {
-        sender: req.user._id,
-        users: [req.user._id, receiver._id],
-        content,
-      },
-      (err, newMessage) => {
-        if (err) {
-          res.json(err);
-        }
-      }
-    );
-  }
-);
+// router.post(
+//   '/',
+//   passport.authenticate('jwt', { session: false }),
+//   async (req, res) => {
+//     console.log(newMessage);
+//   }
+// );
 
 module.exports = router;
