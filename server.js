@@ -92,13 +92,11 @@ const io = socket(server, {
   },
 });
 
-const onlineUsers = new Map();
+const sids = io.of('/').adapter.sids;
 
 io.on('connection', socket => {
-  global.chatSocket = socket;
-
-  socket.on('addUser', userId => {
-    onlineUsers.set(userId, socket.id);
+  socket.on('joinRoom', roomId => {
+    socket.join(roomId);
   });
 
   socket.on('sendMsg', async data => {
@@ -118,8 +116,9 @@ io.on('connection', socket => {
       'sender users',
       '-_id firstName lastName email image'
     );
-    const senderSocket = onlineUsers.get(sender);
-    const receivingUserSocket = onlineUsers.get(receivingUserId._id.toString());
-    io.to(senderSocket).to(receivingUserSocket).emit('receiveMsg', newMessage);
+    const senderRoom = Array.from(sids.get(socket.id))[1];
+    io.to(senderRoom).emit('receiveMsg', newMessage);
   });
+
+  socket.on('disconnect', () => {});
 });

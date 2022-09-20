@@ -19,12 +19,4 @@ router.get(
   }
 );
 
-// router.post(
-//   '/',
-//   passport.authenticate('jwt', { session: false }),
-//   async (req, res) => {
-//     console.log(newMessage);
-//   }
-// );
-
 module.exports = router;
