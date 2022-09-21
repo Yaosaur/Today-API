@@ -87,7 +87,10 @@ const server = app.listen(port, () => {
 
 const io = socket(server, {
   cors: {
-    origin: process.env.CLIENT_ORIGIN,
+    origin: [
+      `http://${process.env.CLIENT_ORIGIN}`,
+      `https://${process.env.CLIENT_ORIGIN}`,
+    ],
     credentials: true,
   },
 });
