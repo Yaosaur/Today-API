@@ -21,15 +21,19 @@ router.get(
 );
 
 router.get(
-  '/user',
+  '/user/:email',
   passport.authenticate('jwt', { session: false }),
   (req, res) => {
-    User.findById(req.user.id, '-_id -password -projects', (err, foundUser) => {
-      if (err) {
-        throw new ExpressError();
+    User.find(
+      { email: req.params.email },
+      '-_id -password -projects',
+      (err, foundUser) => {
+        if (err) {
+          throw new ExpressError();
+        }
+        res.json(foundUser);
       }
-      res.json(foundUser);
-    });
+    );
   }
 );
 

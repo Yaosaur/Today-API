@@ -44,10 +44,7 @@ app.post('/register', (req, res, next) => {
     if (err) {
       if (err.code === 11000) {
         return next(
-          new ExpressError(
-            'That account with that email is already in use.',
-            409
-          )
+          new ExpressError('An account with that email already exists.', 409)
         );
       } else {
         return next(new ExpressError());
@@ -125,7 +122,7 @@ const sids = io.of('/').adapter.sids;
 
 io.on('connection', socket => {
   socket.on('joinRoom', roomId => {
-    socket.join(roomId);
+    socket.join(roomId.split('&').sort().join('&'));
   });
 
   socket.on('sendMsg', async data => {
