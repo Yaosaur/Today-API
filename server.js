@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const ExpressError = require('./utils/ExpressError');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
@@ -19,7 +20,7 @@ mongoose.connection.once('open', () => {
 });
 
 app.use(passport.initialize());
-require('./middleware/passport');
+require('./utils/passport');
 
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
@@ -36,11 +37,23 @@ app.use('/comments', commentsController);
 app.use('/projects', projectsController);
 app.use('/messages', messagesController);
 
-app.post('/register', (req, res) => {
+app.post('/register', (req, res, next) => {
   const { password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 12);
   User.create({ ...req.body, password: hashedPassword }, (err, newUser) => {
-    const { email, firstName, lastName } = newUser;
+    if (err) {
+      if (err.code === 11000) {
+        return next(
+          new ExpressError(
+            'That account with that email is already in use.',
+            409
+          )
+        );
+      } else {
+        return next(new ExpressError());
+      }
+    }
+    const { email, firstName, lastName, image } = newUser;
     const id = newUser._id.toString();
     const token = jwt.sign({ id, email, firstName, lastName }, secret, {
       expiresIn: '8h',
@@ -56,13 +69,13 @@ app.post('/register', (req, res) => {
   });
 });
 
-app.post('/login', (req, res) => {
+app.post('/login', (req, res, next) => {
   User.findOne({ email: req.body.email }, (err, user) => {
     if (!user) {
-      res.json({ error: 'Invalid Credentials' });
+      return next(new ExpressError('Invalid Credentials'));
     } else {
       if (!bcrypt.compareSync(req.body.password, user.password)) {
-        res.json({ error: 'Invalid Credentials' });
+        return next(new ExpressError('Invalid Credentials'));
       } else {
         const { id, email, firstName, lastName, image } = user;
         const token = jwt.sign({ id, email, firstName, lastName }, secret, {
@@ -79,6 +92,19 @@ app.post('/login', (req, res) => {
       }
     }
   });
+});
+
+app.use((req, res, next) => {
+  throw new ExpressError('Could not find this route.', 404);
+});
+
+app.use((error, req, res, next) => {
+  if (res.headerSent) {
+    return next(error);
+  }
+  res
+    .status(error.statusCode || 500)
+    .json(error.message || 'Something went wrong!');
 });
 
 const server = app.listen(port, () => {

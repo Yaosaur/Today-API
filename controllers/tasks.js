@@ -1,6 +1,8 @@
 const express = require('express');
-const router = express.Router({ mergeParams: true });
+const router = express.Router();
 const passport = require('passport');
+const catchAsync = require('../utils/catchAsync');
+const ExpressError = require('../utils/ExpressError');
 
 const User = require('../models/user');
 const Project = require('../models/project');
@@ -9,20 +11,20 @@ const Task = require('../models/task');
 router.get(
   '/',
   passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
+  catchAsync(async (req, res) => {
     const foundTasks = await Task.find({
       $or: [{ issuer: req.user.id }, { assignedTo: req.user.id }],
     })
       .populate('project', 'title')
       .populate('issuer assignedTo', '-_id firstName lastName email image');
     res.json(foundTasks);
-  }
+  })
 );
 
 router.get(
   '/:taskId',
   passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
+  catchAsync(async (req, res) => {
     const foundTask = await Task.findById(req.params.taskId)
       .populate('issuer assignedTo', '-_id firstName lastName email image')
       .populate({
@@ -31,14 +33,17 @@ router.get(
           { path: 'poster', select: '-_id firstName lastName email image' },
         ],
       });
+    if (!foundTask) {
+      throw new ExpressError('No task found for that ID.', 404);
+    }
     res.json(foundTask);
-  }
+  })
 );
 
 router.post(
   '/:projectId',
   passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
+  catchAsync(async (req, res) => {
     const arrayOfEmails = req.body.assignedTo.map(member => member.email);
     const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
     const newTask = await Task.create({
@@ -65,13 +70,13 @@ router.post(
         ],
       });
     res.json(updatedProject);
-  }
+  })
 );
 
 router.put(
   '/:taskId',
   passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
+  catchAsync(async (req, res) => {
     const arrayOfEmails = req.body.assignedTo.map(member => member.email);
     const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
     const updatedTask = await Task.findByIdAndUpdate(
@@ -83,13 +88,13 @@ router.put(
       { new: true }
     ).populate('issuer assignedTo', '-_id firstName lastName email image');
     res.json(updatedTask);
-  }
+  })
 );
 
 router.delete(
   '/:projectId/:taskId',
   passport.authenticate('jwt', { session: false }),
-  async (req, res) => {
+  catchAsync(async (req, res) => {
     const { projectId, taskId } = req.params;
     await Task.findByIdAndRemove(taskId);
     const updatedProject = await Project.findByIdAndUpdate(projectId, {
@@ -104,7 +109,7 @@ router.delete(
         ],
       });
     res.json(updatedProject);
-  }
+  })
 );
 
 module.exports = router;
