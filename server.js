@@ -14,6 +14,9 @@ const mongoose = require('mongoose');
 const User = require('./models/user');
 const Message = require('./models/message');
 
+const validateLoginInput = require('./utils/validation/login');
+const validateRegisterInput = require('./utils/validation/register');
+
 mongoose.connect(process.env.MONGO_URI);
 mongoose.connection.once('open', () => {
   console.log('connected to mongo');
@@ -38,6 +41,21 @@ app.use('/projects', projectsController);
 app.use('/messages', messagesController);
 
 app.post('/register', (req, res, next) => {
+  const { errors, isValid } = validateRegisterInput(req.body);
+  const { firstNameErr, lastNameErr, emailErr, passwordErr } = errors;
+
+  if (!isValid) {
+    if (firstNameErr) {
+      throw new ExpressError(firstNameErr, 400);
+    } else if (lastNameErr) {
+      throw new ExpressError(lastNameErr, 400);
+    } else if (emailErr) {
+      throw new ExpressError(emailErr, 400);
+    } else if (passwordErr) {
+      throw new ExpressError(passwordErr, 400);
+    }
+  }
+
   const { password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 12);
   User.create({ ...req.body, password: hashedPassword }, (err, newUser) => {
@@ -67,6 +85,17 @@ app.post('/register', (req, res, next) => {
 });
 
 app.post('/login', (req, res, next) => {
+  const { errors, isValid } = validateLoginInput(req.body);
+  const { emailErr, passwordErr } = errors;
+
+  if (!isValid) {
+    if (emailErr) {
+      throw new ExpressError(emailErr, 400);
+    } else if (passwordErr) {
+      throw new ExpressError(passwordErr, 400);
+    }
+  }
+
   User.findOne({ email: req.body.email }, (err, user) => {
     if (!user) {
       return next(new ExpressError('Invalid Credentials'));

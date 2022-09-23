@@ -7,6 +7,8 @@ const ExpressError = require('../utils/ExpressError');
 const User = require('../models/user');
 const Project = require('../models/project');
 
+const validateProjectInput = require('../utils/validation/projects');
+
 router.get(
   '/',
   passport.authenticate('jwt', { session: false }),
@@ -50,6 +52,21 @@ router.post(
   '/',
   passport.authenticate('jwt', { session: false }),
   catchAsync(async (req, res) => {
+    const { errors, isValid } = validateProjectInput(req.body, req.user.id);
+    const { titleErr, descriptionErr, creatorErr, membersErr } = errors;
+
+    if (!isValid) {
+      if (titleErr) {
+        throw new ExpressError(titleErr, 400);
+      } else if (descriptionErr) {
+        throw new ExpressError(descriptionErr, 400);
+      } else if (creatorErr) {
+        throw new ExpressError(creatorErr, 400);
+      } else if (membersErr) {
+        throw new ExpressError(membersErr, 400);
+      }
+    }
+
     const arrayOfEmails = req.body.members.map(member => member.email);
     const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
     Project.create(
@@ -65,6 +82,21 @@ router.put(
   '/:id',
   passport.authenticate('jwt', { session: false }),
   catchAsync(async (req, res) => {
+    const { errors, isValid } = validateProjectInput(req.body, req.user.id);
+    const { titleErr, descriptionErr, creatorErr, membersErr } = errors;
+
+    if (!isValid) {
+      if (titleErr) {
+        throw new ExpressError(titleErr, 400);
+      } else if (descriptionErr) {
+        throw new ExpressError(descriptionErr, 400);
+      } else if (creatorErr) {
+        throw new ExpressError(creatorErr, 400);
+      } else if (membersErr) {
+        throw new ExpressError(membersErr, 400);
+      }
+    }
+
     const arrayOfEmails = req.body.members.map(member => member.email);
     const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
     const editedProject = await Project.findByIdAndUpdate(
@@ -80,6 +112,9 @@ router.put(
           { path: 'assignedTo', select: '-_id firstName lastName email' },
         ],
       });
+    if (!editedProject) {
+      throw new ExpressError('No project found for that ID.', 404);
+    }
     res.json(editedProject);
   })
 );

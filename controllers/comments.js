@@ -12,7 +12,6 @@ router.post(
   catchAsync(async (req, res) => {
     const newComment = await Comment.create({
       poster: req.user.id,
-      published: new Date(),
       comment: req.body.comment,
     });
     const updatedTask = await Task.findByIdAndUpdate(
