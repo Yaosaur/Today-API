@@ -4,9 +4,9 @@ const Comment = require('./comment');
 const taskSchema = new mongoose.Schema({
   project: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
   title: { type: String, required: true },
-  description: { type: String },
+  description: { type: String, required: true },
   dateCreated: { type: Date },
-  deadline: { type: Date },
+  deadline: { type: Date, required: true },
   issuer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   priority: { type: String, enum: ['Low', 'Medium', 'High'] },

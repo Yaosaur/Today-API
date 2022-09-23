@@ -8,6 +8,7 @@ const User = require('../models/user');
 const Project = require('../models/project');
 
 const validateProjectInput = require('../utils/validation/projects');
+const throwProjectErr = require('../utils/validation/throwProjectErr');
 
 router.get(
   '/',
@@ -53,19 +54,7 @@ router.post(
   passport.authenticate('jwt', { session: false }),
   catchAsync(async (req, res) => {
     const { errors, isValid } = validateProjectInput(req.body, req.user.id);
-    const { titleErr, descriptionErr, creatorErr, membersErr } = errors;
-
-    if (!isValid) {
-      if (titleErr) {
-        throw new ExpressError(titleErr, 400);
-      } else if (descriptionErr) {
-        throw new ExpressError(descriptionErr, 400);
-      } else if (creatorErr) {
-        throw new ExpressError(creatorErr, 400);
-      } else if (membersErr) {
-        throw new ExpressError(membersErr, 400);
-      }
-    }
+    throwProjectErr(errors, isValid);
 
     const arrayOfEmails = req.body.members.map(member => member.email);
     const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
@@ -83,19 +72,7 @@ router.put(
   passport.authenticate('jwt', { session: false }),
   catchAsync(async (req, res) => {
     const { errors, isValid } = validateProjectInput(req.body, req.user.id);
-    const { titleErr, descriptionErr, creatorErr, membersErr } = errors;
-
-    if (!isValid) {
-      if (titleErr) {
-        throw new ExpressError(titleErr, 400);
-      } else if (descriptionErr) {
-        throw new ExpressError(descriptionErr, 400);
-      } else if (creatorErr) {
-        throw new ExpressError(creatorErr, 400);
-      } else if (membersErr) {
-        throw new ExpressError(membersErr, 400);
-      }
-    }
+    throwProjectErr(errors, isValid);
 
     const arrayOfEmails = req.body.members.map(member => member.email);
     const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
@@ -126,6 +103,8 @@ router.delete(
     Project.findByIdAndRemove(req.params.id, (err, removedProject) => {
       if (err) {
         return next(new ExpressError());
+      } else if (!removedProject) {
+        return next(new ExpressError('No project found for that ID.', 404));
       }
       res.json(removedProject);
     });

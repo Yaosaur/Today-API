@@ -8,6 +8,9 @@ const User = require('../models/user');
 const Project = require('../models/project');
 const Task = require('../models/task');
 
+const validateTaskInput = require('../utils/validation/tasks');
+const throwTaskErr = require('../utils/validation/throwTaskErr');
+
 router.get(
   '/',
   passport.authenticate('jwt', { session: false }),
@@ -44,6 +47,15 @@ router.post(
   '/:projectId',
   passport.authenticate('jwt', { session: false }),
   catchAsync(async (req, res) => {
+    const { errors, isValid } = validateTaskInput(
+      req.params.projectId,
+      null,
+      req.body,
+      req.user.id
+    );
+
+    throwTaskErr(errors, isValid);
+
     const arrayOfEmails = req.body.assignedTo.map(member => member.email);
     const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
     const newTask = await Task.create({
@@ -52,7 +64,6 @@ router.post(
       dateCreated: new Date(),
       issuer: req.user.id,
       assignedTo: membersId,
-      status: 'New',
     });
     const updatedProject = await Project.findByIdAndUpdate(
       req.params.projectId,
@@ -77,6 +88,15 @@ router.put(
   '/:taskId',
   passport.authenticate('jwt', { session: false }),
   catchAsync(async (req, res) => {
+    const { errors, isValid } = validateTaskInput(
+      null,
+      req.params.taskId,
+      req.body,
+      req.user.id
+    );
+
+    throwTaskErr(errors, isValid);
+
     const arrayOfEmails = req.body.assignedTo.map(member => member.email);
     const membersId = await User.find({ email: { $in: arrayOfEmails } }, '_id');
     const updatedTask = await Task.findByIdAndUpdate(
@@ -87,6 +107,9 @@ router.put(
       },
       { new: true }
     ).populate('issuer assignedTo', '-_id firstName lastName email image');
+    if (!updatedTask) {
+      next(new ExpressError('There is no task with that Id', 404));
+    }
     res.json(updatedTask);
   })
 );
@@ -94,9 +117,9 @@ router.put(
 router.delete(
   '/:projectId/:taskId',
   passport.authenticate('jwt', { session: false }),
-  catchAsync(async (req, res) => {
+  catchAsync(async (req, res, next) => {
     const { projectId, taskId } = req.params;
-    await Task.findByIdAndRemove(taskId);
+    const deletedTask = await Task.findByIdAndRemove(taskId);
     const updatedProject = await Project.findByIdAndUpdate(projectId, {
       $pull: { tasks: taskId },
     })
@@ -108,6 +131,9 @@ router.delete(
           { path: 'assignedTo', select: '-_id firstName lastName email image' },
         ],
       });
+    if (!deletedTask) {
+      return next(new ExpressError('That task does not exist', 404));
+    }
     res.json(updatedProject);
   })
 );
