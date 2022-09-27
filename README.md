@@ -1,6 +1,6 @@
 # Today API
 
-Today API is the backend portion meant to be used with [Today, the Project Management App](https://github.com/Yaosaur/Today). Please check out that github repository for the live site. In conjunction with the database it is able to take incoming requests from the Today App and register users, log them in, and allow them to create and manage projects and associated tasks with other users. Within the tasks, users are able to post, edit, and delete their own comments and view all comments from other users. Users also have the option to upload a profile picture of themselves.
+Today API is the backend portion meant to be used with [Today, the Project Management App](https://github.com/Yaosaur/Today). Please check out that github repository for the live site. In conjunction with the database it is able to take incoming requests from the Today App and register users, log them in, and allow them to create and manage projects and associated tasks with other users. Within the tasks, users are able to post, edit, and delete their own comments and view all comments from other users. Users also have the option to upload a profile picture of themselves and direct message team members in real time.
 
 ## RESTFUL Routes
 
@@ -44,12 +44,21 @@ Please note all routes below require the user to be authenticated and if a route
 | PUT    | /comments/:taskId/:commentId | Updates a comment and returns the updated associated task                 |
 | DELETE | /comments/:taskId/:commentId | Removes a comment and its location in its associated task                 |
 
+### Messages
+
+| VERB | PATH             | DESCRIPTION                                                                              |
+| ---- | ---------------- | ---------------------------------------------------------------------------------------- |
+| GET  | /messages/:email | Retrieves all the messages between the current user and the user of the email in the URL |
+
+\*Sending messages via sockets will also create a message in the database, however there is not route for that.
+
 ## Built With
 
 - MongoDB/Mongoose
 - Express
 - Node
 - AWS S3
+- Socket.IO
 
 The following NPM packages:
 
@@ -60,7 +69,7 @@ The following NPM packages:
 
 This API is currently deployed [here](https://today-project-backend.herokuapp.com/)
 
-Please note since there is no index route ' / ', you will get a error ' Cannot GET / ' when visiting. On other routes, you will receive an 'Unauthorized' response unless logged in.
+Please note since there is no index route ' / ', you will get a message 'Could not find this route.' when visiting. On other routes, you will receive an 'Unauthorized' response unless logged in.
 
 ## Local Installation/Interaction
 
@@ -95,6 +104,5 @@ Currently not accepting any contributors for this project as the it is still a w
 
 ## Future Plans
 
-- Complete server side implementation of in-app messaging
 - Allow users to attach images to a comment
 - Implement history and changes to a task
