@@ -50,7 +50,7 @@ Please note all routes below require the user to be authenticated and if a route
 | ---- | ---------------- | ---------------------------------------------------------------------------------------- |
 | GET  | /messages/:email | Retrieves all the messages between the current user and the user of the email in the URL |
 
-\*Sending messages via sockets will also create a message in the database, however there is not route for that.
+\*Sending messages via sockets will also create a message in the database, however there is no route for that.
 
 ## Built With
 
