@@ -18,7 +18,7 @@ module.exports = function validateCommentInput(
     errors.taskErr = 'Task ID is invalid';
   }
 
-  if (!Validator.isMongoId(commentId)) {
+  if (commentId && !Validator.isMongoId(commentId)) {
     errors.commentErr = 'Comment ID is invalid';
   }
 
