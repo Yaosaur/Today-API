@@ -4,7 +4,11 @@ const passport = require('passport');
 const catchAsync = require('../utils/catchAsync');
 const ExpressError = require('../utils/ExpressError');
 const Validator = require('validator');
-const { fileUpload, fileDelete } = require('../utils/imageManipulation');
+const {
+  fileUpload,
+  fileDelete,
+  fileUploadV3,
+} = require('../utils/imageManipulation');
 
 const User = require('../models/user');
 
@@ -48,13 +52,17 @@ router.put(
   '/setPhoto',
   passport.authenticate('jwt', { session: false }),
   (req, res, next) => {
-    const uploadSingle = fileUpload('today-profile-pictures').single('image');
+    const key = Date.now().toString();
+    const uploadSingle = fileUpload('today-profile-pictures', key).single(
+      'image'
+    );
     uploadSingle(
       req,
       res,
       catchAsync(async err => {
+        const location = `https://today-profile-pictures.s3.amazonaws.com/${key}`;
         const oldUserInfo = await User.findByIdAndUpdate(req.user.id, {
-          image: req.file.location,
+          image: location,
         });
         if (!oldUserInfo) {
           next(new ExpressError('No user found', 404));
@@ -62,7 +70,7 @@ router.put(
         if (oldUserInfo.image) {
           fileDelete('today-profile-pictures', oldUserInfo.image);
         }
-        res.json(req.file.location);
+        res.json(location);
       })
     );
   }

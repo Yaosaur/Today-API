@@ -11,7 +11,7 @@ const s3 = new S3Client({
   },
 });
 
-const fileUpload = bucketName =>
+const fileUpload = (bucketName, key) =>
   multer({
     storage: multerS3({
       s3,
@@ -21,7 +21,7 @@ const fileUpload = bucketName =>
         cb(null, { fieldName: file.fieldname });
       },
       key: function (req, file, cb) {
-        cb(null, Date.now().toString());
+        cb(null, key);
       },
     }),
   });
