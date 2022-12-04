@@ -67,7 +67,7 @@ The following NPM packages:
 
 ## Deployment
 
-This API is currently deployed [here](https://today-project-backend.herokuapp.com/)
+This API is currently deployed [here](https://today-api.onrender.com)
 
 Please note since there is no index route ' / ', you will get a message 'Could not find this route.' when visiting. On other routes, you will receive an 'Unauthorized' response unless logged in.
 
@@ -89,7 +89,7 @@ Finally, create a .env file with the following environmental variables: `PORT`, 
 
 ### Postman
 
-If you wish to interact with the API, without using the deployed [Today App](https://today-pm.herokuapp.com/), you can use [Postman](https://www.postman.com/) instead. After downloading the desktop version and registering on Postman, under Workspaces, create a new Workspace. Then in the dashboard of the workspace, press new and then HTTP Request on the modal.
+If you wish to interact with the API, without using the deployed [Today App](https://today-pm.onrender.com), you can use [Postman](https://www.postman.com/) instead. After downloading the desktop version and registering on Postman, under Workspaces, create a new Workspace. Then in the dashboard of the workspace, press new and then HTTP Request on the modal.
 
 You should see a screen for making HTTP Requests. ![HTTP requests](./Postman.JPG)
 Now you can send requests to the local server by entering the URL (ie: 'http://localhost:5000/' or whichever PORT number you choose).
