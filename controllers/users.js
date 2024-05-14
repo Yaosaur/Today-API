@@ -4,11 +4,12 @@ const passport = require('passport');
 const catchAsync = require('../utils/catchAsync');
 const ExpressError = require('../utils/ExpressError');
 const Validator = require('validator');
-const {
-  fileUpload,
-  fileDelete,
-  fileUploadV3,
-} = require('../utils/imageManipulation');
+//S3 account no longer active - Legacy code is no longer being used in project
+//Import methods to upload and delete images in S3 bucket
+// const {
+//   fileUpload,
+//   fileDelete,
+// } = require('../utils/imageManipulation');
 
 const User = require('../models/user');
 
@@ -48,32 +49,34 @@ router.get(
   }
 );
 
-router.put(
-  '/setPhoto',
-  passport.authenticate('jwt', { session: false }),
-  (req, res, next) => {
-    const key = Date.now().toString();
-    const uploadSingle = fileUpload('today-profile-pictures', key).single(
-      'image'
-    );
-    uploadSingle(
-      req,
-      res,
-      catchAsync(async err => {
-        const location = `https://today-profile-pictures.s3.amazonaws.com/${key}`;
-        const oldUserInfo = await User.findByIdAndUpdate(req.user.id, {
-          image: location,
-        });
-        if (!oldUserInfo) {
-          next(new ExpressError('No user found', 404));
-        }
-        if (oldUserInfo.image) {
-          fileDelete('today-profile-pictures', oldUserInfo.image);
-        }
-        res.json(location);
-      })
-    );
-  }
-);
+//S3 account no longer active - Legacy code is no longer being used in project
+//Route to change user's photos in S3 and update MongoDB with the new image URL for the user
+// router.put(
+//   '/setPhoto',
+//   passport.authenticate('jwt', { session: false }),
+//   (req, res, next) => {
+//     const key = Date.now().toString();
+//     const uploadSingle = fileUpload('today-profile-pictures', key).single(
+//       'image'
+//     );
+//     uploadSingle(
+//       req,
+//       res,
+//       catchAsync(async err => {
+//         const location = `https://today-profile-pictures.s3.amazonaws.com/${key}`;
+//         const oldUserInfo = await User.findByIdAndUpdate(req.user.id, {
+//           image: location,
+//         });
+//         if (!oldUserInfo) {
+//           next(new ExpressError('No user found', 404));
+//         }
+//         if (oldUserInfo.image) {
+//           fileDelete('today-profile-pictures', oldUserInfo.image);
+//         }
+//         res.json(location);
+//       })
+//     );
+//   }
+// );
 
 module.exports = router;

@@ -5,7 +5,9 @@ const userSchema = new mongoose.Schema({
   lastName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true, minLength: 6 },
-  image: { type: String },
+  //S3 account no longer active - Legacy code is no longer being used in project
+  //Images stored the URL to the object in S3 bucket
+  //image: { type: String },
   projects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
 });
 
