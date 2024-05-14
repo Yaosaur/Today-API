@@ -14,7 +14,7 @@ Please note all routes below require the user to be authenticated and if a route
 | POST | /login          | Logs a user in and assigns them a token which expires in 8 hours   |
 | GET  | /users          | Returns a list of all users available in the database              |
 | GET  | /users/user     | Returns current user's information                                 |
-| PUT  | /users/setPhoto | Will replace the image set as user's profile picture               |
+| PUT  | /users/setPhoto (Legacy route) | Will replace the image set as user's profile picture               |
 
 ### Projects
 
@@ -57,7 +57,7 @@ Please note all routes below require the user to be authenticated and if a route
 - MongoDB/Mongoose
 - Express
 - Node
-- AWS S3
+- AWS S3 (Legacy - S3 account no longer active)
 - Socket.IO
 
 The following NPM packages:
@@ -85,7 +85,7 @@ After cloning, install the required NPM packages using
 npm install
 ```
 
-Finally, create a .env file with the following environmental variables: `PORT`, `MONGO_URI`, `SECRET`, `S3_ACCESS_KEY`, and `S3_ACCESS_SECRET`
+Finally, create a .env file with the following environmental variables: `PORT`, `MONGO_URI`, and `SECRET`. `S3_ACCESS_KEY`, and `S3_ACCESS_SECRET` are legacy env variables used to access an inactive S3 account.
 
 ### Postman
 
